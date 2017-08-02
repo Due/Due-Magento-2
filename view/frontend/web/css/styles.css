@@ -1,0 +1,41 @@
+#payment_form_due_cc {
+    width: 70%;
+}
+
+#payment_form_due_cc .fields.group-2 .field {
+    width: 47% !important;
+}
+
+#payment_form_due_cc .fields.group-2 .field:nth-child(1) {
+    float: left;
+}
+
+#payment_form_due_cc .fields.group-2 .field:nth-child(2) {
+    float: right;
+}
+
+#payment_form_due_cc .field.required label.label {
+    font-weight: 600;
+}
+
+#payment_form_due_cc .field.required label.label:after {
+    content: '*';
+    color: #e02b27;
+    font-size: 1.2rem;
+    margin: 0 0 0 5px;
+}
+
+#payment_form_due_cc label.error {
+    color: #e02b27;
+}
+
+#due-cc-cards {
+    display: inline-block;
+    background: url(../images/creditcards_logo.png) no-repeat;
+    width: 332px;
+    height: 51px;
+}
+
+#due-cc-logo {
+    /* */
+}

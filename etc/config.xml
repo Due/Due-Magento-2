@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <payment>
+            <due_cc>
+                <active>0</active>
+                <model>Due\Payments\Model\Method\Cc</model>
+                <title>Pay with Credit Card</title>
+                <payment_action>authorize_capture</payment_action>
+                <order_status>pending_payment</order_status>
+                <allowspecific>0</allowspecific>
+                <vault_active>1</vault_active>
+                <can_authorize_vault>1</can_authorize_vault>
+            </due_cc>
+        </payment>
+    </default>
+</config>
