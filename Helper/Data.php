@@ -15,14 +15,14 @@ use Magento\Vault\Model\PaymentTokenManagement;
  */
 class Data extends AbstractHelper
 {
-    protected static $_cardTypes = [
+    protected static $_cardTypes = array(
         'VI' => 'VISA',
         'MC' => 'MasterCard',
         'DI' => 'Discover',
         'JCB' => 'JCB',
         'DN' => 'DinersClub',
         'AE' => 'American Express'
-    ];
+    );
 
     /**
      * @var \Magento\Framework\Encryption\EncryptorInterface
@@ -105,8 +105,8 @@ class Data extends AbstractHelper
         \Magento\Tax\Helper\Data $taxHelper,
         \Magento\Framework\App\ProductMetadata $productMetadata,
         PaymentTokenManagement $tokenManagement
-    ) {
-    
+    )
+    {
         parent::__construct($context);
         $this->_encryptor = $encryptor;
         $this->_config = $config;
@@ -178,8 +178,7 @@ class Data extends AbstractHelper
      * @param $status
      * @return \Magento\Framework\DataObject
      */
-    public function getAssignedStatus($status)
-    {
+    public function getAssignedStatus($status) {
         $collection = $this->orderStatusCollectionFactory->create()->joinStates();
         $status = $collection->addAttributeToFilter('main_table.status', $status)->getFirstItem();
         return $status;
@@ -322,4 +321,5 @@ class Data extends AbstractHelper
 
         return (string)__('%1 ending in %2 %3/%4', $type, $last_4, $exp_month, $exp_year);
     }
+
 }

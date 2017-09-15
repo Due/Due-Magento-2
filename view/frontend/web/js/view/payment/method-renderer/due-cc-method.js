@@ -17,19 +17,18 @@ define(
         'jquery.payment',
         'jquery/validate'
     ],
-    function (
-        ko,
-        $,
-        _,
-        Component,
-        placeOrderAction,
-        redirectOnSuccessAction,
-        additionalValidators,
-        quote,
-        customer,
-        fullScreenLoader,
-        globalMessageList,
-        $t
+    function (ko,
+              $,
+              _,
+              Component,
+              placeOrderAction,
+              redirectOnSuccessAction,
+              additionalValidators,
+              quote,
+              customer,
+              fullScreenLoader,
+              globalMessageList,
+              $t
     ) {
         'use strict';
         var validator = null;
@@ -46,7 +45,7 @@ define(
                 var code = this.getCode();
 
                 // Init Due
-                this.initDue(window.checkoutConfig.payment.due_cc.env, window.checkoutConfig.payment.due_cc.app_id);
+                this.initDue(window.checkoutConfig.payment.due_cc.env, window.checkoutConfig.payment.due_cc.app_id, window.checkoutConfig.payment.due_cc.rail_type);
                 if (typeof window.dueTokens === 'undefined') {
                     window.dueTokens = {};
                 }
@@ -196,7 +195,7 @@ define(
 
                         self.isPlaceOrderActionAllowed(false);
                         self.getPlaceOrderDeferredObject()
-                            .always(function () {
+                            .always(function() {
                                 // Unlock fields
                                 $('[name="payment[cc_number]"], [name="payment[cc_expiry]"], [name="payment[cc_cvc]"]', form).prop('disabled', false);
                             })
@@ -205,13 +204,13 @@ define(
                                     self.isPlaceOrderActionAllowed(true);
                                 }
                             ).done(
-                                function () {
+                            function () {
                                 self.afterPlaceOrder();
                                 if (self.redirectAfterPlaceOrder) {
                                     redirectOnSuccessAction.execute();
                                 }
-                                }
-                            );
+                            }
+                        );
 
                         return true;
                     });
@@ -235,7 +234,7 @@ define(
 
                     self.isPlaceOrderActionAllowed(false);
                     self.getPlaceOrderDeferredObject()
-                        .always(function () {
+                        .always(function() {
                             // Unlock fields
                             $('[name="payment[cc_number]"], [name="payment[cc_expiry]"], [name="payment[cc_cvc]"]', form).prop('disabled', false);
                         })
@@ -244,24 +243,24 @@ define(
                                 self.isPlaceOrderActionAllowed(true);
                             }
                         ).done(
-                            function () {
+                        function () {
                             self.afterPlaceOrder();
                             if (self.redirectAfterPlaceOrder) {
                                 redirectOnSuccessAction.execute();
                             }
-                            }
-                        );
+                        }
+                    );
                 }
             },
-            initDue: function (env, app_id) {
+            initDue: function (env, app_id, rail_type) {
                 // Load Due dynamically
                 if (typeof Due === 'undefined') {
-                    $.getScript('https://static.due.com/v1/due.min.js', function () {
-                        Due.load.init(env);
+                    $.getScript('https://static.due.com/v1.1/due.min.js', function () {
+                        Due.load.init(env, rail_type);
                         Due.load.setAppId(app_id);
-                    });
+                    } );
                 } else {
-                    Due.load.init(env);
+                    Due.load.init(env, rail_type);
                     Due.load.setAppId(app_id);
                 }
             },
@@ -299,8 +298,8 @@ define(
             isVaultEnabled: function () {
                 return customer.isLoggedIn() && window.checkoutConfig.payment.due_cc.vault_active;
             },
-            getSavedCards: function () {
-                return _.map(window.checkoutConfig.payment.due_cc.saved_cards, function (value, key) {
+            getSavedCards: function() {
+                return _.map(window.checkoutConfig.payment.due_cc.saved_cards, function(value, key) {
                     return {
                         'key': value.id,
                         'value': value.title

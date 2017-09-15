@@ -10,10 +10,10 @@ define(
 
         return $.ajax('/due/vault/cards', {
             method: 'GET',
-            beforeSend: function () {
+            beforeSend: function() {
                 fullScreenLoader.startLoader();
             }
-        }).always(function () {
+        }).always(function() {
             fullScreenLoader.stopLoader();
         });
     }

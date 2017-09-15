@@ -29,12 +29,17 @@
                     <label>Sandbox Api Key</label>
                     <config_path>payment/due_cc/api_key_sandbox</config_path>
                 </field>
-                <field id="sandbox" translate="label" type="select" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="rail_type" translate="label" type="select" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Rail Type</label>
+                    <source_model>Due\Payments\Model\Config\Source\RailType</source_model>
+                    <config_path>payment/due_cc/rail_type</config_path>
+                </field>
+                <field id="sandbox" translate="label" type="select" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Sandbox Mode</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <config_path>payment/due_cc/sandbox</config_path>
                 </field>
-                <field id="vault_active" translate="label" type="select" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="vault_active" translate="label" type="select" sortOrder="9" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Vault Enabled</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <config_path>payment/due_cc/store_cards</config_path>

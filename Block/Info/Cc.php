@@ -30,8 +30,8 @@ class Cc extends \Magento\Payment\Block\Info\Cc
         Template\Context $context,
         \Magento\Payment\Model\Config $paymentConfig,
         array $data = []
-    ) {
-    
+    )
+    {
         parent::__construct($context, $paymentConfig, $data);
         $this->transactionRepository = $transactionRepository;
     }
@@ -46,3 +46,5 @@ class Cc extends \Magento\Payment\Block\Info\Cc
         return $this->toHtml();
     }
 }
+
+

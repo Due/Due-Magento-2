@@ -41,8 +41,8 @@ class Cards extends Action
         \Magento\Checkout\Model\Session $checkoutSession,
         \Due\Payments\Helper\Data $helper,
         JsonFactory $resultJsonFactory
-    ) {
-    
+    )
+    {
         $this->_customerSession = $customerSession;
         $this->_checkoutSession = $checkoutSession;
         $this->helper = $helper;
@@ -70,4 +70,6 @@ class Cards extends Action
         $json = $this->resultJsonFactory->create();
         return $json->setData($cards);
     }
+
+
 }

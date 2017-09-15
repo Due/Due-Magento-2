@@ -102,14 +102,15 @@ class CcConfigProvider implements ConfigProviderInterface
 
         /** @var \Due\Payments\Model\Method\Cc $method */
         $method = $this->_paymentHelper->getMethodInstance(Cc::METHOD_CODE);
-        if ($method->isAvailable()) {
+        //if ($method->isAvailable()) {
             $is_sandbox = (bool)$method->getConfigData('sandbox', $store_id);
             $app_id = $method->getConfigData($is_sandbox ? 'app_id_sandbox' : 'app_id', $store_id);
             $config['payment'][Cc::METHOD_CODE]['env'] = $is_sandbox ? 'stage' : 'prod';
             $config['payment'][Cc::METHOD_CODE]['app_id'] = $app_id;
+	        $config['payment'][Cc::METHOD_CODE]['rail_type'] = $method->getConfigData('rail_type', $store_id);
             $config['payment'][Cc::METHOD_CODE]['vault_active'] = (bool)$method->getConfigData('vault_active', $store_id);
             $config['payment'][Cc::METHOD_CODE]['saved_cards'] = $saved_cards;
-        }
+        //}
 
         return $config;
     }

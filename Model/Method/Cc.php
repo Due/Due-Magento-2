@@ -163,6 +163,36 @@ class Cc extends \Magento\Payment\Model\Method\AbstractMethod implements Gateway
     }
 
     /**
+     * Check whether payment method can be used
+     *
+     * @param \Magento\Quote\Api\Data\CartInterface|null $quote
+     * @return bool
+     */
+    public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null)
+    {
+        if (parent::isAvailable($quote) === false) {
+            return false;
+        }
+
+
+        if (!$this->isActive($quote ? $quote->getStoreId() : null)) {
+            return false;
+        }
+
+        if (!$quote) {
+            return false;
+        }
+
+        if ($this->getConfigData('rail_type') === 'us' &&
+            $quote->getQuoteCurrencyCode() !== 'USD')
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Assign data to info model instance
      *
      * @param DataObject|mixed $data
@@ -200,8 +230,32 @@ class Cc extends \Magento\Payment\Model\Method\AbstractMethod implements Gateway
                 ->setCcExpYear($details['cc_exp_year'])
                 ->setCcSaveCard(false);
         } else {
-            $due_token =$additionalData->getCcDueToken();
+            $due_token = $additionalData->getCcDueToken();
             $card = explode(':', $due_token);
+
+	        // For US Int Rail Type
+	        if ($this->getConfigData('rail_type') === 'us_int') {
+		        // Init Due
+		        \Due\Due::setRailType($this->getConfigData('rail_type'));
+		        if ($this->getConfigData('sandbox') == '1') {
+			        \Due\Due::setEnvName('stage');
+			        \Due\Due::setApiKey($this->getConfigData('api_key_sandbox'));
+			        \Due\Due::setAppId($this->getConfigData('app_id_sandbox'));
+		        } else {
+			        \Due\Due::setEnvName('prod');
+			        \Due\Due::setApiKey($this->getConfigData('api_key'));
+			        \Due\Due::setAppId($this->getConfigData('app_id'));
+		        }
+
+		        $customer = $this->customerSession->getCustomer();
+		        $token_data = \Due\Tokenize::card(array(
+			        'token' => $card[0],
+			        'email' => $this->customerSession->isLoggedIn() ? $customer->getEmail() : ''
+		        ));
+		        if (!empty($token_data->customer_id)) {
+			        $card[0] = $token_data->customer_id;
+		        }
+	        }
         }
 
         $info->setAdditionalInformation('cc_due_token', $additionalData->getCcDueToken())
@@ -268,7 +322,57 @@ class Cc extends \Magento\Payment\Model\Method\AbstractMethod implements Gateway
         /** @var \Magento\Sales\Model\Order $order */
         $order = $info->getOrder();
 
+	    // Set risk data
+	    $risk_data = array();
+	    $risk_data['items'] = array();
+	    foreach($order->getAllVisibleItems() as $item) {
+		    $risk_data['items'][] = array(
+			    'description' => $item->getName(),
+			    'amount' => $item->getRowTotalInclTax(),
+			    'quantity' => (int)$item->getQtyOrdered()
+		    );
+	    }
+
+	    // Get Billing info
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $country = $objectManager->create('Magento\Directory\Model\Country');
+
+	    $billingAddress = $order->getBillingAddress()->getStreet();
+	    $billingCountryId = $order->getBillingAddress()->getCountryId();
+	    $billingCountry = $country->loadByCode($billingCountryId)->getName();
+	    $customer_data = array(
+		    'first_name' => $order->getBillingAddress()->getFirstname(),
+		    'last_name' => $order->getBillingAddress()->getLastname(),
+		    'street_1' => $billingAddress[0],
+		    'street_2' => (isset($billingAddress[1])) ? $billingAddress[1] : '',
+		    'city' => (string)$order->getBillingAddress()->getCity(),
+		    'state' => (string)$order->getBillingAddress()->getRegion(),
+		    'zip' => (string)$order->getBillingAddress()->getPostcode(),
+		    'country' => $billingCountry,
+		    'phone' => (string)$order->getBillingAddress()->getTelephone(),
+		    'email' => (string)$order->getBillingAddress()->getEmail(),
+	    );
+
+	    // Get shipping info
+	    $shipping_data = array();
+	    if (!$order->getIsVirtual()) {
+		    $deliveryAddress = $order->getShippingAddress()->getStreet();
+		    $deliveryCountryId = $order->getShippingAddress()->getCountryId();
+		    $deliveryCountry = $country->loadByCode($billingCountryId)->getName();
+		    $shipping_data = array(
+			    'first_name' => $order->getShippingAddress()->getFirstname(),
+			    'last_name' => $order->getShippingAddress()->getLastname(),
+			    'street_1' => $deliveryAddress[0],
+			    'street_2' => (isset($deliveryAddress[1])) ? $deliveryAddress[1] : '',
+			    'city' => (string)$order->getShippingAddress()->getCity(),
+			    'state' => (string)$order->getShippingAddress()->getRegion(),
+			    'zip' => (string)$order->getShippingAddress()->getPostcode(),
+			    'country' => $deliveryCountry,
+		    );
+	    }
+
         // Init Due
+	    \Due\Due::setRailType($this->getConfigData('rail_type'));
         if ($this->getConfigData('sandbox') == '1') {
             \Due\Due::setEnvName('stage');
             \Due\Due::setApiKey($this->getConfigData('api_key_sandbox'));
@@ -287,13 +391,17 @@ class Cc extends \Magento\Payment\Model\Method\AbstractMethod implements Gateway
                 'card_id' => $info->getAdditionalInformation('card_id'),
                 'card_hash' => $info->getAdditionalInformation('card_hash'),
                 'unique_id' => $order->getIncrementId(),
-                'customer_ip' => $this->helper->getRemoteAddr()
+                'customer_ip' => $this->helper->getRemoteAddr(),
+	            'rtoken' => $info->getAdditionalInformation('risk_token'),
+                'rdata' => $risk_data,
+                'customer' => $customer_data,
+                'shipping' => $shipping_data
             ]);
         } catch (\Exception $e) {
             throw new LocalizedException(__($e->getMessage()));
         }
 
-        if ($transaction && $transaction->success) {
+        if ($transaction && $transaction->id) {
             $transaction_id = $transaction->id;
             $message = sprintf('Payment success. Transaction Id: %s', $transaction_id);
             $order->setCustomerNote($message);
@@ -382,6 +490,7 @@ class Cc extends \Magento\Payment\Model\Method\AbstractMethod implements Gateway
         $transactionId = $payment->getParentTransactionId();
 
         // Init Due
+	    \Due\Due::setRailType($this->getConfigData('rail_type'));
         if ($this->getConfigData('sandbox') == '1') {
             \Due\Due::setEnvName('stage');
             \Due\Due::setApiKey($this->getConfigData('api_key_sandbox'));
